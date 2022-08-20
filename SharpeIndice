@@ -1,0 +1,38 @@
+#vamos caregar o modulo pandas
+import pandas as pd
+#importar biblioteca do pandas datareader
+from pandas_datareader import data as pdr
+#importar a bliblioteca Numpy
+import numpy as np
+import matplotlib.pyplot as plt
+%matplotlib inline
+
+# tempo ideal para calc um beta é de 5 anos por isso eu coloquei (data atual - 1) -  menos 5 anos
+carteira = ['VVAR3.SA','^BVSP']
+mdata = pd.DataFrame()
+for t in carteira:
+    mdata[t] = pdr.DataReader(t,data_source='yahoo',start='2015-1-1', end = '2020-03-19')['Adj Close']
+
+#vamos criar um data frame novo com os dados de retorno em log... sabemos que em log é o melhor jeito se for ativos individuais
+df_log= np.log(mdata / mdata.shift(1))
+    
+#vamos cria uma matriz de covariancai com o metodo (.cov)
+cov = df_log.cov()*250
+
+#vamos obter a covariancia com o mercador, dando o numero floot
+cov_com_mercado = cov.iloc[0,1]
+
+# vamos obter a variancia anualizado o nosso indice Ibov( Nossa carteria de Mercado)
+var_mercado = df_log['^BVSP'].var() * 250
+
+
+beta_acao = cov_com_mercado / var_mercado
+beta_acao
+
+
+retorno_esp_min = 0.0375 + beta_acao * 0.08
+#agora vou tranformar em porcetagem
+print (str(round(retorno_esp_min ,6)*100) + '%')
+
+sharpe = (retorno_esp_min - 0.0375)/(df_log['VVAR3.SA'].std() * 250 ** 0.5)
+sharpe
